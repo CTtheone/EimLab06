@@ -1,5 +1,12 @@
 package ro.pub.cs.systems.eim.lab06.clientservercommunication.views;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.Socket;
+
+import ro.pub.cs.systems.eim.lab06.clientservercommunication.R;
+import ro.pub.cs.systems.eim.lab06.clientservercommunication.general.Constants;
+import ro.pub.cs.systems.eim.lab06.clientservercommunication.general.Utilities;
 import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,8 +17,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import ro.pub.cs.systems.eim.lab06.clientservercommunication.R;
-import ro.pub.cs.systems.eim.lab06.clientservercommunication.general.Constants;
 
 public class ClientFragment extends Fragment {
 
@@ -23,6 +28,7 @@ public class ClientFragment extends Fragment {
 
         @Override
         protected Void doInBackground(String... params) {
+        	Socket socket = null;
             try {
 
                 // TODO: exercise 6b
@@ -32,12 +38,28 @@ public class ClientFragment extends Fragment {
                 // - while the line that was read is not null (EOF was not sent), append the content to serverMessageTextView
                 // by publishing the progress - with the publishProgress(...) method - to the UI thread
                 // - close the socket to the server
+            	String serverAddress = params[0];
+            	String serverPort = params[1];
+            	socket = new Socket(serverAddress, Integer.parseInt(serverPort));
+            	BufferedReader reader = Utilities.getReader(socket);
+            	String line;
+            	while ((line = reader.readLine()) != null) {
+            		onProgressUpdate(line);
+            	}
+            	
 
             } catch (Exception exception) {
                 Log.e(Constants.TAG, "An exception has occurred: " + exception.getMessage());
                 if (Constants.DEBUG) {
                     exception.printStackTrace();
                 }
+            } finally {
+            	try {
+					socket.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
             }
             return null;
         }
@@ -46,12 +68,14 @@ public class ClientFragment extends Fragment {
         protected void onPreExecute() {
         	// TODO: exercise 6b
             // - reset the content of serverMessageTextView
+        	serverMessageTextView.setText("");
         }
 
         @Override
         protected void onProgressUpdate(String... progress) {
         	// TODO: exercise 6b
             // - append the content to serverMessageTextView
+        	serverMessageTextView.append(progress[0]);
         }
 
         @Override
